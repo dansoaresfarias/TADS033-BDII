@@ -1,3 +1,4 @@
+-- Comandos SQL: DML - Insert
 insert into cliente (cpf, nome, sexo, email, telefone, dataNasc) 
 	value ("123.321.222-11", "Heloisa Costa", 'F', 
 			"heloisa.costa@gmail.com", "81987457600", "2005-05-30");
@@ -92,7 +93,87 @@ VALUES
     ("753.963.852-35", "PE", "Recife", "Ilha do Leite", "Rua da Saudade", 2100, "Apto 703", "50070-090"),
     ("258.963.753-36", "PE", "Olinda", "Casa Caiada", "Avenida Presidente Kennedy", 2200, "Casa", "53130-540");
 
+-- Comandos SQL: DML - Update
+update cliente 
+	set pontuacao = 1200
+		where cpf = "123.321.222-00";
+        
+update cliente 
+	set pontuacao = 100, 
+		idade = 19
+		where cpf = "123.321.222-11";
+        
+update cliente
+	set pontuacao = 250
+		where sexo = 'F';
 
-delete from enderecocli where cliente_cpf = "123.321.222-11";
+start transaction;
+update cliente
+	set pontuacao = 100
+		where sexo = 'M';
+rollback;
+commit;
 
-delete from cliente where cpf = "123.321.222-11";
+update cliente
+	set pontuacao = pontuacao * 1.10
+		where sexo = 'M';
+        
+update cliente
+	set idade = year(now()) - year(dataNasc);
+
+update cliente
+	set idade = timestampdiff(year, dataNasc, now());
+    
+update cliente
+	set pontuacao = pontuacao + 1000
+		where nome like "%Costa%";
+        
+update cliente
+	set pontuacao = pontuacao + 1000
+		where nome like "%Castro%" or
+			nome like "%Melo%";
+        
+update cliente
+	set pontuacao = pontuacao * 1.5
+		where sexo = 'F' and idade >= 30;
+
+select cliente_cpf from enderecocli
+	where cidade = "Olinda";
+        
+update cliente
+	set pontuacao = pontuacao + 500
+		where cpf in (select cliente_cpf from enderecocli
+	where cidade = "Olinda");
+    
+update cliente
+	set pontuacao = pontuacao + 100
+		where cpf in (select cliente_cpf from enderecocli
+	where cidade = "Olinda" or cidade = "Paulista");
+    
+update cliente
+	set pontuacao = pontuacao + 500
+		where month(dataNasc) = 9;
+
+select now();
+
+select year(now());
+
+-- Comandos SQL: DML - Delete
+delete from enderecocli 
+	where cliente_cpf = "123.321.222-00";
+
+delete from cliente 
+	where cpf = "123.321.222-00";
+
+delete from cliente 
+	where cpf = "123.321.222-11";
+    
+delete from cliente 
+	where cpf in (select cliente_cpf from enderecocli
+	where cidade = "Olinda");
+
+delete from cliente;
+
+truncate cliente;
+
+SET SQL_SAFE_UPDATES = 0;
