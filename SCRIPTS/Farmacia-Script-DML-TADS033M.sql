@@ -125,6 +125,9 @@ update cliente
 	set idade = timestampdiff(year, dataNasc, now());
     
 update cliente
+	set pontuacao = rand(3) * 1000;
+    
+update cliente
 	set pontuacao = pontuacao + 1000
 		where nome like "%Costa%";
         
