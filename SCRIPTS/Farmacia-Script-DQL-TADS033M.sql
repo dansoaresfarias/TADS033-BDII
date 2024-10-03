@@ -178,10 +178,26 @@ select dep.cpf "CPF Dependente", dep.nome "Dependente",
 		inner join funcionario func on func.cpf = dep.funcionario_cpf
 			order by func.nome, dep.nome;
 
+select * from cliente;
 
+select cli.cpf "CPF", cli.nome "Cliente", cli.sexo "Gênero", 
+	timestampdiff(year, cli.dataNasc, now()) "Idade", 
+    cli.email "E-mail", cli.telefone "Telefone", 
+    endCli.bairro "Bairro", endCli.cidade "Cidade"
+	from cliente cli
+		inner join enderecocli endCli on endCli.Cliente_cpf = cli.cpf
+		order by cli.nome; 
 
-
-
+select cli.cpf "CPF", cli.nome "Cliente", cli.sexo "Gênero", 
+	timestampdiff(year, cli.dataNasc, now()) "Idade", 
+    cli.email "E-mail", cli.telefone "Telefone", 
+    coalesce(concat(psCli.nome, " | ", psCli.numero), "Não informado") "Plano de Saude", 
+    coalesce(endCli.bairro, "Não informado") "Bairro", 
+    coalesce(endCli.cidade, "Não informado") "Cidade"
+	from cliente cli
+		left join enderecocli endCli on endCli.Cliente_cpf = cli.cpf
+        left join planosaude psCli on psCli.Cliente_cpf = cli.cpf
+		order by cli.nome; 
 
 
 
