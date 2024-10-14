@@ -178,26 +178,76 @@ select dep.cpf "CPF Dependente", dep.nome "Dependente",
 		inner join funcionario func on func.cpf = dep.funcionario_cpf
 			order by func.nome, dep.nome;
 
-select * from cliente;
+select func.cpf "CPF", func.nome "Funcionario", 
+	count(dep.cpf) "Quantidade de Dependentes"
+    from funcionario func
+		inner join dependente dep on dep.funcionario_cpf = func.cpf
+			group by func.cpf
+				order by func.nome;
 
-select cli.cpf "CPF", cli.nome "Cliente", cli.sexo "Gênero", 
-	timestampdiff(year, cli.dataNasc, now()) "Idade", 
-    cli.email "E-mail", cli.telefone "Telefone", 
-    endCli.bairro "Bairro", endCli.cidade "Cidade"
-	from cliente cli
-		inner join enderecocli endCli on endCli.Cliente_cpf = cli.cpf
-		order by cli.nome; 
+select func.cpf "CPF", func.nome "Funcionario", 
+	count(dep.cpf) "Quantidade de Dependentes"
+    from funcionario func
+		left join dependente dep on dep.funcionario_cpf = func.cpf
+			group by func.cpf
+				order by func.nome;
 
-select cli.cpf "CPF", cli.nome "Cliente", cli.sexo "Gênero", 
-	timestampdiff(year, cli.dataNasc, now()) "Idade", 
-    cli.email "E-mail", cli.telefone "Telefone", 
-    coalesce(concat(psCli.nome, " | ", psCli.numero), "Não informado") "Plano de Saude", 
-    coalesce(endCli.bairro, "Não informado") "Bairro", 
-    coalesce(endCli.cidade, "Não informado") "Cidade"
-	from cliente cli
-		left join enderecocli endCli on endCli.Cliente_cpf = cli.cpf
-        left join planosaude psCli on psCli.Cliente_cpf = cli.cpf
-		order by cli.nome; 
+select upper(func.nome) "Funcionário", func.cpf as "CPF", func.sexo "Gênero", 
+	date_format(func.dataNasc, '%d/%m/%Y') "Data de Nascimento", 
+    timestampdiff(year, func.dataNasc, now()) "Idade",
+	func.estadoCivil "Estado Civil", func.email "E-mail", concat(func.ch, 'h') "Carga-horária", 
+    concat('R$ ', format(func.salario, 2, 'de_DE')) "Salário", 
+    concat('R$ ', format(func.comissao, 2, 'de_DE')) "Comissão", 
+    concat('R$ ', format(func.salario + func.comissao, 2, 'de_DE')) "Salário Final",
+    date_format(func.dataAdm, '%H:%i - %d/%m/%Y') "Data de Admissão", 
+    dep.nome "Departamento", 
+    coalesce(tel.numero, "Não informado") "Número de Telefone"
+	from funcionario func
+		inner join trabalhar trb on trb.funcionario_cpf = func.cpf    
+		inner join departamento dep on dep.idDepartamento = trb.Departamento_idDepartamento
+        left join telefone tel on tel.Funcionario_cpf = func.cpf
+				order by func.nome;        
+
+create view relatorioFunc as
+	select upper(func.nome) "Funcionário", func.cpf as "CPF", func.sexo "Gênero", 
+		date_format(func.dataNasc, '%d/%m/%Y') "Data de Nascimento", 
+		timestampdiff(year, func.dataNasc, now()) "Idade",
+		func.estadoCivil "Estado Civil", func.email "E-mail", concat(func.ch, 'h') "Carga-horária", 
+		concat('R$ ', format(func.salario, 2, 'de_DE')) "Salário", 
+		concat('R$ ', format(func.comissao, 2, 'de_DE')) "Comissão", 
+		concat('R$ ', format(func.salario + func.comissao, 2, 'de_DE')) "Salário Final",
+		date_format(func.dataAdm, '%H:%i - %d/%m/%Y') "Data de Admissão", 
+		crg.nome "Cargo",
+        dep.nome "Departamento", grt.nome "Gerente",
+		coalesce(tel.numero, "Não informado") "Número de Telefone"
+		from funcionario func
+			inner join trabalhar trb on trb.funcionario_cpf = func.cpf    
+            inner join cargo crg on crg.cbo = trb.Cargo_cbo
+			inner join departamento dep on dep.idDepartamento = trb.Departamento_idDepartamento
+			left join telefone tel on tel.Funcionario_cpf = func.cpf
+            left join funcionario grt on grt.cpf = dep.Gerente_cpf
+					order by func.nome;     
+
+drop view relatoriofunc;
+
+select * from relatoriofunc;
+
+select * from relatoriofunc
+	where departamento like "Frente%";
+    
+select * from relatoriofunc
+	order by departamento;
+
+select dep.nome "Departamento", 
+	count(trb.Funcionario_cpf) "Quantidade de Funcionários", 
+	concat('R$ ', format(sum(func.salario + func.comissao), 2, 'de_DE')) "Investimento Salarial + Comissão", 
+    coalesce(grt.nome, "Não existe") "Gerente"
+	from departamento dep
+		inner join trabalhar trb on trb.Departamento_idDepartamento = dep.idDepartamento
+        inner join funcionario func on func.cpf = trb.Funcionario_cpf
+        left join funcionario grt on grt.cpf = dep.Gerente_cpf
+			group by trb.Departamento_idDepartamento
+				order by dep.nome;
 
 
 
