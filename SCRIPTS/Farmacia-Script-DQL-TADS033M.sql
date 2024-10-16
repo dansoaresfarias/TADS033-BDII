@@ -248,10 +248,33 @@ select dep.nome "Departamento",
         left join funcionario grt on grt.cpf = dep.Gerente_cpf
 			group by trb.Departamento_idDepartamento
 				order by dep.nome;
+                
+select date_format(vnd.dataVenda, '%d/%m/%Y - %H:%i') "Data da Venda",
+	concat("R$ ", format(valorTotal -  coalesce(desconto, 0), 2, "de_DE")) "Valor Pago",
+    cli.nome "Cliente",
+    func.nome "Vendedor"
+	from venda vnd
+		inner join cliente cli on cli.cpf = vnd.Cliente_cpf
+        inner join funcionario func on func.cpf = vnd.Funcionario_cpf;
+  
+select cli.nome "Cliente", count(vnd.idVenda) "Quantidade de Vendas",
+	concat("R$ ", format(sum(valorTotal -  coalesce(desconto, 0)), 2, "de_DE")) "Faturamento"
+	from venda vnd
+		inner join cliente cli on cli.cpf = vnd.Cliente_cpf
+			group by cli.cpf
+				order by cli.nome;
 
+select func.nome "Funcionario", count(vnd.idVenda) "Quantidade de Vendas",
+	concat("R$ ", format(sum(valorTotal -  coalesce(desconto, 0)), 2, "de_DE")) "Faturamento"
+	from venda vnd
+		inner join funcionario func on func.cpf = vnd.Funcionario_cpf
+			group by func.cpf
+				order by count(vnd.idVenda) desc;
 
-
-
-
-
-
+select func.nome "Funcionario", count(vnd.idVenda) "Quantidade de Vendas",
+	concat("R$ ", format(sum(valorTotal -  coalesce(desconto, 0)), 2, "de_DE")) "Faturamento"
+	from venda vnd
+		inner join funcionario func on func.cpf = vnd.Funcionario_cpf
+			where vnd.dataVenda between "2021-04-01" and "2021-06-30"
+				group by func.cpf
+					order by sum(valorTotal -  coalesce(desconto, 0)) desc;
