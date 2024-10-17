@@ -278,3 +278,33 @@ select func.nome "Funcionario", count(vnd.idVenda) "Quantidade de Vendas",
 			where vnd.dataVenda between "2021-04-01" and "2021-06-30"
 				group by func.cpf
 					order by sum(valorTotal -  coalesce(desconto, 0)) desc;
+
+select upper(tipo) "Tipo", count(Venda_idVenda) "Frequência de Venda",
+	concat("R$ ", format(sum(valorPago), 2, "de_DE")) "Faturamento"
+	from formapag
+		group by tipo
+			order by sum(valorPago) desc;
+		
+select coalesce(endc.cidade, "Não Informado") "Cidade", 
+	coalesce(endc.bairro, "Não Informado") "Bairro", 
+	count(vnd.idVenda) "Quantidade de Vendas",
+    concat("R$ ", format(sum(vnd.valorTotal), 2, "de_DE")) "Faturamento"
+	from venda vnd
+		inner join cliente cli on cli.cpf = vnd.Cliente_cpf
+		left join enderecocli endc on endc.Cliente_cpf = cli.cpf
+			group by endc.cidade, endc.bairro
+				order by endc.cidade, sum(vnd.valorTotal) desc;
+
+select prod.nome "Produto", count(ivp.Venda_idVenda) "Frequência de Venda",
+	sum(ivp.quantidade) "Total Vendido", 
+	concat("R$ ", format(sum(ivp.quantidade*ivp.valorDeVenda), 2, "de_DE")) "Faturamento",
+    concat("R$ ", format(sum(ivp.quantidade*(ivp.valorDeVenda - ic.valorComp)), 2, "de_DE")) "Lucro"
+	from itensvendaprod ivp
+		inner join produto prod on prod.idproduto = ivp.Produto_idProduto
+		inner join itenscompra ic on ic.Produto_idProduto = prod.idProduto
+			group by ivp.Produto_idProduto
+				order by sum(ivp.quantidade*ivp.valorDeVenda) desc;
+                
+
+
+
