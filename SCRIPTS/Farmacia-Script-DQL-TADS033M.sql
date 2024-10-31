@@ -305,6 +305,33 @@ select prod.nome "Produto", count(ivp.Venda_idVenda) "Frequência de Venda",
 			group by ivp.Produto_idProduto
 				order by sum(ivp.quantidade*ivp.valorDeVenda) desc;
                 
+-- criando a função calcAuxSaude
+delimiter $$
+create function calcAuxSaude(dn date)
+	returns decimal(6,2) deterministic
+	begin
+		declare idade int;
+        declare auxSaude decimal(6,2) default 0.0;
+        select timestampdiff(year, dn, now()) into idade;
+        if idade <= 25 then set auxSaude = 250;
+			elseif idade>= 26 and idade <= 35 then set auxSaude = 350;
+			elseif idade>= 36 and idade <= 45 then set auxSaude = 450;
+			else set auxSaude = 550;
+		end if;
+        return auxSaude;
+    end $$
+delimiter ;
 
 
+
+-- cpf, funcionario, salario(SB), comissao, aux alimentacao(550), aux saude(idade),
+-- aux escola(180*filho<=6), INSS, IRRF, salario liquido
+select cpf "CPF", nome "Funcionário", 
+	concat("R$ ", format(salario, 2, 'de_DE')) "Salário Bruto",
+    concat("R$ ", format(comissao, 2, 'de_DE')) "Comissão",
+    concat("R$ ", format(550, 2, 'de_DE')) "Auxílio Alimentação",
+    timestampdiff(year, datanasc, now()) "Idade",
+    concat("R$ ", format(calcAuxSaude(dataNasc), 2, 'de_DE'))  "Auxílio Saúde"
+	from funcionario
+		order by nome;
 
