@@ -320,9 +320,56 @@ create function calcAuxSaude(dn date)
 		end if;
         return auxSaude;
     end $$
+delimiter ;				
+
+-- criando a função calcAuxEscola
+delimiter $$
+create function calcAuxEscola(funcCPF varchar(14))
+	returns decimal(6,2) deterministic
+	begin
+		declare auxEscola decimal(6,2) default 0.0;
+        declare qtdFilho int default 0;
+        select count(cpf) into qtdFilho
+			from dependente
+				where funcionario_cpf = funcCPF and
+					timestampdiff(year, dataNasc, now()) <= 6
+						group by funcionario_cpf;
+        set auxEscola = 180 * qtdFilho;
+        return auxEscola;
+    end $$
+delimiter ;
+
+-- criação da função de calcINSS
+delimiter $$
+create function calcINSS(sb decimal(7,2))
+	returns decimal(6,2) deterministic
+    begin
+		declare inss decimal(6,2) default 0.0;
+        if sb <= 1412.00 then set inss = sb * 0.075;
+			elseif sb > 1412.0 and sb <= 2666.68 then set inss = sb * 0.09;
+			elseif sb > 2666.68 and sb <= 4000.03 then set inss = sb * 0.12;
+            elseif sb > 4000.03 and sb <= 7786.02 then set inss = sb * 0.14;
+			else set inss = 7786.02 * 0.14;
+            end if;
+		return inss;
+    end $$
 delimiter ;
 
 
+-- criação da função de calcIRRF
+delimiter $$
+create function calcIRRF(sb decimal(7,2))
+	returns decimal(6,2) deterministic
+    begin
+		declare irrf decimal(6,2) default 0.0;
+        if sb > 2259.21  and sb <= 2826.65 then set irrf = sb * 0.075;
+			elseif sb > 2826.65 and sb <= 3751.05 then set irrf = sb * 0.15;
+            elseif sb > 3751.05 and sb <= 4664.68 then set irrf = sb * 0.225;
+			else set irrf = sb * 0.275;
+            end if;
+		return irrf;
+    end $$
+delimiter ;
 
 -- cpf, funcionario, salario(SB), comissao, aux alimentacao(550), aux saude(idade),
 -- aux escola(180*filho<=6), INSS, IRRF, salario liquido
@@ -330,8 +377,30 @@ select cpf "CPF", nome "Funcionário",
 	concat("R$ ", format(salario, 2, 'de_DE')) "Salário Bruto",
     concat("R$ ", format(comissao, 2, 'de_DE')) "Comissão",
     concat("R$ ", format(550, 2, 'de_DE')) "Auxílio Alimentação",
-    timestampdiff(year, datanasc, now()) "Idade",
-    concat("R$ ", format(calcAuxSaude(dataNasc), 2, 'de_DE'))  "Auxílio Saúde"
+    concat("R$ ", format(calcAuxSaude(dataNasc), 2, 'de_DE'))  "Auxílio Saúde",
+    concat("R$ ", format(calcAuxEscola(cpf), 2, 'de_DE'))  "Auxílio Escola",
+    concat("-R$ ", format(calcINSS(salario), 2, 'de_DE'))  "INSS",
+    concat("-R$ ", format(calcIRRF(salario), 2, 'de_DE'))  "IRRF",
+    concat("R$ ", format(salario + comissao + 550 + calcAuxSaude(dataNasc) 
+		+ calcAuxEscola(cpf) - calcINSS(salario) - calcIRRF(salario), 2, 
+        'de_DE'))"Salário Líquido"
 	from funcionario
 		order by nome;
 
+create view vFolhaPag as
+	select cpf "CPF", nome "Funcionário", 
+		concat("R$ ", format(salario, 2, 'de_DE')) "Salário Bruto",
+		concat("R$ ", format(comissao, 2, 'de_DE')) "Comissão",
+		concat("R$ ", format(550, 2, 'de_DE')) "Auxílio Alimentação",
+		concat("R$ ", format(calcAuxSaude(dataNasc), 2, 'de_DE'))  "Auxílio Saúde",
+		concat("R$ ", format(calcAuxEscola(cpf), 2, 'de_DE'))  "Auxílio Escola",
+		concat("-R$ ", format(calcINSS(salario), 2, 'de_DE'))  "INSS",
+		concat("-R$ ", format(calcIRRF(salario), 2, 'de_DE'))  "IRRF",
+		concat("R$ ", format(salario + comissao + 550 + calcAuxSaude(dataNasc) 
+			+ calcAuxEscola(cpf) - calcINSS(salario) - calcIRRF(salario), 2, 
+			'de_DE'))"Salário Líquido"
+		from funcionario
+			order by nome;
+
+select * from vfolhapag
+	order by `Salário Líquido` desc;
