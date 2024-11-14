@@ -404,3 +404,69 @@ create view vFolhaPag as
 
 select * from vfolhapag
 	order by `Salário Líquido` desc;
+    
+-- valorComp, valorVnd --> valorComp + (valorComp * 0,33) + (valorComp * 0,25) +
+-- (valorComp * 2)
+
+delimiter $$
+create procedure calcValorFinal(in valorComp decimal(6,2), out valorVnd decimal(6,2))
+	begin
+		set valorVnd = valorComp + (valorComp * 0.33) + 
+			(valorComp * 0.25) + (valorComp * 2);
+    end $$
+delimiter ;
+
+call calcValorFinal(75/15, @valorVenda);
+
+select @valorVenda;
+
+delimiter $$
+create procedure cadFunc(in pcpf varchar(14),
+						in pnome varchar(60), 
+						in pnomeSocial varchar(45),
+						in pemail varchar(45), 
+						in psexo char(1), 
+						in pestadoCivil varchar(15), 
+						in pdataNasc date, 
+						in pch int, 
+						in psalario decimal(7,2),
+						in pcomissao decimal(6,2), 
+						in pdataAdm datetime,
+                        in puf char(2), 
+						in pcidade varchar(60), 
+						in pbairro varchar(60), 
+						in prua varchar(70), 
+						in pnumero int, 
+						in pcomp varchar(45), 
+						in pcep varchar(9),
+						in numTel1 varchar(15),
+                        in numTel2 varchar(15),
+                        in numTel3 varchar(15))
+	begin
+		insert into funcionario (cpf, nome, nomeSocial, email, sexo, estadoCivil, 
+			dataNasc, ch, salario, comissao, dataAdm)
+			value (pcpf, pnome, pnomeSocial, pemail, psexo, pestadoCivil, pdataNasc,
+			pch, psalario, pcomissao, pdataAdm);
+		insert into enderecofunc
+			value (pcpf, puf, pcidade, pbairro, prua, pnumero, pcomp, pcep);
+		insert into telefone (numero, funcionario_cpf)
+			value (numTel1, pcpf);
+		if numTel2 is not null 
+			then insert into telefone (numero, funcionario_cpf)
+					value (numTel2, pcpf);
+		end if;
+        if numTel3 is not null 
+			then insert into telefone (numero, funcionario_cpf)
+					value (numTel3, pcpf);
+		end if;
+    end $$
+delimiter ;
+    
+call cadFunc("999.888.777-99", "Mateus Henrique de Assis", null, "mhassis@gmail.com",
+	'M', "Casado", '2003-11-08', 40, 3200, 500, '2024-11-04', 'PE', "Recife", 
+    "Varzea", "Prof. Danilo Farias", 157, "Ap 304", "50850-300", "(81)999987777", 
+    "(81)977886655", null);
+
+
+
+
