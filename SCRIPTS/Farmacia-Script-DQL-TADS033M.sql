@@ -467,6 +467,39 @@ call cadFunc("999.888.777-99", "Mateus Henrique de Assis", null, "mhassis@gmail.
     "Varzea", "Prof. Danilo Farias", 157, "Ap 304", "50850-300", "(81)999987777", 
     "(81)977886655", null);
 
+delimiter $$
+create trigger tgr_aft_insert_itensVndProd after insert
+	on itensVendaProd
+    for each row
+    begin
+		update produto
+			set quantidade = quantidade - new.quantidade
+				where idProduto = new.Produto_idProduto;
+		update venda
+			set valorTotal = valorTotal + new.quantidade * new.valorDeVenda 
+								- new.descontoProd * new.valorDeVenda * new.quantidade
+				where idVenda = new.Venda_idVenda;
+    end $$
+delimiter ;
+
+drop trigger tgr_aft_insert_itensVndProd;
+
+insert into venda (dataVenda, valorTotal, desconto, Funcionario_cpf, 
+					Cliente_cpf)
+		value ('2024-11-21 11:40:00', 0.0, 0.0,"999.888.777-99","896.235.417-80");
+
+insert into itensvendaprod
+	values (264, 1, 5, 4, 0.1),
+		(264, 6, 9, 2, 0.0),
+        (264, 41, 5, 10, 0.2),
+        (264, 45, 50, 1, 0.0);
+
+
+
+
+
+
+
 
 
 
