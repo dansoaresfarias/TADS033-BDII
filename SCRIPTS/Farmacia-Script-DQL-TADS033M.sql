@@ -555,3 +555,90 @@ update itensvendaprod
 update itensvendaprod
 	set quantidade = quantidade - 1
 		where venda_idVenda = 265 and produto_idProduto = 11;
+        
+insert into venda (dataVenda, valorTotal, desconto, Funcionario_cpf, 
+					Cliente_cpf)
+		value ('2024-12-04 09:35:00', 0.0, 0.0,"999.888.777-99","896.235.417-80");
+        
+insert into itensvendaprod
+	values (266, 2, 7, 2, 0.0),
+		(266, 3, 15, 4, 0.5),
+        (266, 4, 10, 5, 0.2),
+        (266, 5, 8, 2, 0.0);        
+        
+delete from itensvendaprod
+	where Venda_idVenda = 266 and Produto_idProduto = 5;
+        
+update itensvendaprod
+	set quantidade = quantidade - 2
+		where venda_idVenda = 266 and produto_idProduto = 3;        
+        
+update itensvendaprod
+	set quantidade = quantidade + 5
+		where venda_idVenda = 266 and produto_idProduto = 4;          
+        
+delimiter $$
+create trigger tgr_aft_insert_itensVndSrv after insert
+	on itensvendaservico
+    for each row
+    begin
+		update venda
+			set valorTotal = valorTotal + new.quantidade * new.valorVenda 
+								- new.desconto * new.valorVenda * new.quantidade
+				where idVenda = new.Venda_idVenda;
+    end $$
+delimiter ;  
+
+delimiter $$
+create trigger trg_aft_delete_itensvendasrv after delete 
+on itensvendaservico 
+for each row 
+	begin 
+		update venda
+			set valorTotal = valorTotal - (old.quantidade * old.valorVenda 
+								- old.desconto * old.valorVenda * old.quantidade)
+				where idVenda = old.Venda_idVenda;
+    end $$
+delimiter ;  
+
+delimiter $$
+create trigger trg_aft_update_itensvendasrv after update 
+on itensvendaservico 
+for each row 
+	begin 
+		if ((new.quantidade - old.quantidade) > 0) then 
+			update venda
+				set valorTotal = valorTotal + ((new.quantidade - old.quantidade) * old.valorVenda 
+									- old.desconto * old.valorVenda * (new.quantidade - old.quantidade))
+					where idVenda = old.Venda_idVenda;
+		else 
+			update venda
+				set valorTotal = valorTotal - ((old.quantidade - new.quantidade) * old.valorVenda 
+									- old.desconto * old.valorVenda * (old.quantidade - new.quantidade))
+					where idVenda = old.Venda_idVenda;
+        end if;
+    end $$
+delimiter ;
+
+insert into itensvendaservico
+	values ("123.456.789-04" ,266, 1, 10, 2, 0.0),
+		("123.456.789-04" ,266, 2, 30, 1, 0.5),
+        ("123.456.789-04" ,266, 3, 15.5, 2, 0.1),
+        ("987.654.321-10" ,266, 5, 5, 1, 0.0);        
+        
+delete from itensvendaservico
+	where Venda_idVenda = 266 and Servico_idServico = 3;
+        
+update itensvendaservico
+	set quantidade = quantidade - 1
+		where venda_idVenda = 266 and Servico_idServico = 1;        
+        
+update itensvendaservico
+	set quantidade = quantidade + 2
+		where venda_idVenda = 266 and Servico_idServico = 2;  
+
+
+
+
+
+ 
